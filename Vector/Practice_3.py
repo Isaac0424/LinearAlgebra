@@ -120,28 +120,121 @@ def Q4():
     print(f'   pearsonr took {t2*1000:.2f} ms')
         
 def KClustering():
-    n = 100
-    data = np.random.randn(n,2)  
+    n = 150
+    k = 3
+    data = np.random.randn(n,2)  #n *2의 가우시안 표준 정규분포 난수 생성 분포 평균은 0이고 분산은 1이다.
     
-    k = 10
-    
-    ridx = np.random.choice(range(len(data)),k,replace=False)
+    ridx = np.random.choice(range(len(data)),k,replace=False) # 0~len(data) 만큼 k개 , 중복 없이!! 랜덤으로 고르기 
     print(ridx)
-    centroids = data[ridx,:]
+    centroids = data[ridx,:] # data행렬은 특징별 샘플링 
     print(centroids)
-    dists = np.zeros((data.shape[0], k))
-    print(dists.shape)
-    for ci in range(k):
-        dists[:,ci] = np.sum((data-centroids[ci,:])**2,axis = 1)
     
-    groupidx = np.argmin(dists,axis = 1)
-    
-    for ki in range(k):
-        centroids[ki, : ] = [np.mean(data[groupidx == ki ,0]),np.mean(data[groupidx == ki, 1])]
+    a=2
+    b=2
+    # setup the figure
+    fig,axs = plt.subplots(a,b,figsize=(6,6))
+    axs = axs.flatten()
+    lineColors = [ [0,0,0],[.4,.4,.4],[.8,.8,.8] ]#'rbm'
+
+    # plot data with initial random cluster centroids
+    axs[0].plot(data[:,0],data[:,1],'ko',markerfacecolor='w')
+    axs[0].plot(centroids[:,0],centroids[:,1],'ko')
+    axs[0].set_title('Iteration 0')
+    axs[0].set_xticks([])
+    axs[0].set_yticks([])
+
+
+    # loop over iterations
+    for iteri in range(a*b-1):
+        dists = np.zeros((data.shape[0], k)) #n * k
+        print(dists.shape)
+        for ci in range(k):
+            dists[:,ci] = np.sum((data-centroids[ci,:])**2,axis = 1)
+        #print(dists)
+        groupidx = np.argmin(dists,axis = 1)
+        print(groupidx)
         
+        for ki in range(k):
+            centroids[ki, : ] = [np.mean(data[groupidx == ki ,0]),np.mean(data[groupidx == ki, 1])]
+        # plot data points
+        for i in range(len(data)):
+            axs[iteri+1].plot([ data[i,0],centroids[groupidx[i],0] ],[ data[i,1],centroids[groupidx[i],1] ],color=lineColors[groupidx[i]])
+        axs[iteri+1].plot(centroids[:,0],centroids[:,1],'ko')
+        axs[iteri+1].set_title(f'Iteration {iteri+1}')
+        axs[iteri+1].set_xticks([])
+        axs[iteri+1].set_yticks([])
+    plt.show()
+def Q5():
+    kernel = np.array([-1,1])
+
+    # and the "signal" 
+    signal = np.zeros(30)
+    signal[10:20] = 1
+
+    result = np.zeros(len(signal))
+    
+    for i in range(len(signal)-(len(kernel)-1)):
+        result[i] = np.dot(kernel,signal[i:i+len(kernel)])   
+
+    # plot them
+    _,axs = plt.subplots(1,3,figsize=(12,4))
+    axs[0].plot(kernel,'ks-')
+    axs[0].set_title('Kernel')
+    axs[0].set_xlim([-15,15])
+    
+    axs[1].plot(signal,'ks-')
+    axs[1].set_title('Time series signal')
+    
+    axs[2].plot(signal,'s-',color=[0,0,0])
+    axs[2].plot(result,'ks-',color=[.5,.5,1])
+    axs[2].set_title('filtering')
+    plt.show()
+    
+    print(result)
+    
+def Q6():
+    # define the kernel (a sorta-kinda Gaussian)
+    kernel = np.array([0,.1,.3,.8,1,.8,.3,.1,0])
+    kernel = kernel / np.sum(kernel)
+
+    # some handy length parameters
+    Nkernel = len(kernel)
+    halfKrn = Nkernel//2
+
+
+    # and the signal
+    Nsignal = 100
+    timeseries = np.random.randn(Nsignal)
+
+     # make a copy of the signal for filtering
+    filtsig = timeseries.copy()
+
+    # loop over the signal time points
+    for t in range(halfKrn+1,Nsignal-halfKrn):
+        filtsig[t] = np.dot(kernel,timeseries[t-halfKrn-1:t+halfKrn])
+
+
+    # plot them
+    _,axs = plt.subplots(1,3,figsize=(12,4))
+    axs[0].plot(kernel,'ks-')
+    axs[0].set_title('Kernel')
+    axs[0].set_xlim([-1,Nsignal])
+
+    axs[1].plot(timeseries,'ks-')
+    axs[1].set_title('Time series signal')
+
+    axs[2].plot(timeseries,color='k',label='Original',linewidth=1)
+    axs[2].plot(filtsig,'--',color=[.6,.6,.6],label='Smoothed',linewidth=2)
+    axs[2].legend()
+
+    plt.show()
+
+
 if __name__=="__main__":
     # TestQ1()
     # Test2Q1()
     # Q2()
     KClustering()
+    #Q5()
+    #Q6()
     pass
